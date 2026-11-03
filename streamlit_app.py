@@ -10,6 +10,8 @@ import logging
 import random
 
 import streamlit as st
+from poster_editor import edit_poster
+
 
 from lyric2poster.art_director import BriefError, build_art_director
 from lyric2poster.charts import load_charts
@@ -165,19 +167,73 @@ if "brief" in st.session_state:
             try:
                 result, fell_back, note = generate_with_fallback(engine, req)
             except EngineError as exc:
-                st.session_state["error"] = str(exc)
-                return
-            st.session_state["poster"] = {
-                "png": add_title_overlay(result.png, title, artist),
-                "engine": result.engine, "model": result.model, "fell_back": fell_back, "note": note,
-            }
-
+                st.session_state["poster"] = {
+    "base_png": result.png,
+    "title": title,
+    "artist": artist,
+    "engine": result.engine,
+    "model": result.model,
+    "fell_back": fell_back,
+    "note": note,
+}
         st.button("2. Make the poster", on_click=make_poster)
+
 
 if "poster" in st.session_state:
     poster = st.session_state["poster"]
+
     if poster["fell_back"]:
-        st.warning(f"The image engine failed, so this is the offline demo poster. ({poster['note']})")
-    st.image(poster["png"], caption=f"{poster['engine']} / {poster['model']}")
-    st.download_button("Download PNG", poster["png"], file_name="poster.png", mime="image/png")
-    st.caption("AI-generated image. Title and artist were added as text afterwards.")
+        st.warning(
+            "Image generation failed. Showing demo poster."
+        )
+
+    st.subheader("Poster Design Studio 2.0")
+    st.write("Customize your poster typography.")
+
+    position = st.selectbox(
+        "Text Position",
+        ["bottom", "center", "top"]
+    )
+
+    alignment = st.selectbox(
+        "Text Alignment",
+        ["center", "left", "right"]
+    )
+
+    text_color = st.color_picker(
+        "Text Color",
+        "#FFFFFF"
+    )
+
+    title_scale = st.slider(
+        "Title Size",
+        min_value=3,
+        max_value=12,
+        value=6
+    )
+
+    edited_png = edit_poster(
+        poster["base_png"],
+        poster["title"],
+        poster["artist"],
+        position=position,
+        alignment=alignment,
+        text_color=text_color,
+        title_scale=title_scale,
+    )
+
+    st.image(
+        edited_png,
+        caption="Your customized poster"
+    )
+
+    st.download_button(
+        "Download My Poster",
+        data=edited_png,
+        file_name="my_custom_poster.png",
+        mime="image/png",
+    )
+
+    st.caption(
+        "Typography edited with Lyric2Poster Studio 2.0."
+    )
