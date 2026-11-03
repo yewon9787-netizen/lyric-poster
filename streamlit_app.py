@@ -167,15 +167,19 @@ if "brief" in st.session_state:
             try:
                 result, fell_back, note = generate_with_fallback(engine, req)
             except EngineError as exc:
-                st.session_state["poster"] = {
-    "base_png": result.png,
-    "title": title,
-    "artist": artist,
-    "engine": result.engine,
-    "model": result.model,
-    "fell_back": fell_back,
-    "note": note,
-}
+                st.session_state["error"] = str(exc)
+                return
+
+            st.session_state["poster"] = {
+                "base_png": result.png,
+                "title": title,
+                "artist": artist,
+                "engine": result.engine,
+                "model": result.model,
+                "fell_back": fell_back,
+                "note": note,
+            }
+
         st.button("2. Make the poster", on_click=make_poster)
 
 
